@@ -1,17 +1,28 @@
-/**
- * @format
- */
-
-import 'react-native';
 import React from 'react';
-import App from '../App';
-
-// Note: import explicitly to use the types shipped with jest.
-import {it} from '@jest/globals';
-
-// Note: test renderer must be required after react-native.
 import renderer from 'react-test-renderer';
+import App from '../App';
+import {expect, it} from '@jest/globals';
 
-it('renders correctly', () => {
-  renderer.create(<App />);
+jest.mock('@react-navigation/native', () => {
+  return {
+    // @ts-ignore
+    NavigationContainer: ({children}) => children,
+    useNavigation: jest.fn().mockReturnValue({navigate: jest.fn()}),
+  };
+});
+
+jest.mock('@react-navigation/stack', () => {
+  return {
+    createStackNavigator: jest.fn(() => ({
+      Screen: jest.fn(({component: Component, ...props}) => (
+        <Component {...props} />
+      )),
+      Navigator: jest.fn(({children}) => <>{children}</>),
+    })),
+  };
+});
+
+it('App component renders correctly', () => {
+  const tree = renderer.create(<App />).toJSON();
+  expect(tree).toMatchSnapshot();
 });
